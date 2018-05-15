@@ -1,0 +1,77 @@
+---
+title: "World_map_week2"
+author: "DLE"
+date: "14 mai 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(dplyr)
+library(sna)
+library(igraph)
+library(leaflet)
+library(lubridate)
+```
+
+## Project Info
+
+This R Markdown and leaflet graphs are illustrating the number of syndicated loan and the total amount that took places in specific country over the years 2008 and 2012 for loans that are withing a specific range.
+
+The data from the coordinate are from "https://developers.google.com/public-data/docs/canonical/countries_csv"
+
+```{r Syndication lending,echo=FALSE,warning=F}
+
+#all_trans = data(syndication_loan) # this is a private and self built database
+all_trans <- read.csv("C:/Users/David/OneDrive/1_Ecole/Mandat_David/analyse-reseau-udes/Data/Table_R_DealScan_2016/Facility_2016.csv",sep="\t",header=T,quote="")
+
+
+all_trans$year <- year(mdy(all_trans$X.FacilityStartDate))
+
+all_trans <- all_trans %>% filter(year>=2008, year<=2012,X.FacilityAmt.>=500000)
+
+
+all_trans <- all_trans%>%filter("nb_players" >=2)
+
+country_data= read.csv("Country_data.csv",sep=",",header = T)
+
+all_trans <- as.data.frame(sapply(all_trans, function(x) gsub("\"", "", x)))
+all_trans$X.CountryOfSyndication.[all_trans$X.CountryOfSyndication.== " USA"] <- "USA"
+
+by_country= all_trans %>% group_by(X.CountryOfSyndication.) %>% summarise(count= n(),amount= sum(as.numeric(X.FacilityAmt.)))
+names(by_country) <- c("Country","Number of transactions","Total amount")
+
+by_country <- by_country %>% merge(country_data,by.x = "Country",by.y = "name",all.x = T)
+
+by_country <- by_country[complete.cases(by_country),]
+
+
+```
+
+## Including the maps
+
+The following map is representing the different countries with names and data. In blue, we have the total value of transaction and in red the total number of transaction for transaction hosted in this country.
+
+```{r World map, echo=FALSE,warning=F}
+
+mytext <- paste(sep="<br/>",by_country$Country,
+                "The number of transaction:",by_country$`Number of transactions`,
+                "The total amount:",by_country$`Total amount`)
+
+
+my_map <- leaflet(data=by_country) %>% addTiles()%>% addMarkers(~longitude,~latitude,popup=~as.character(mytext),label=~as.character(Country),clusterOptions = markerClusterOptions())
+       
+
+
+
+my_map <- my_map %>% addCircleMarkers(radius = log(by_country$`Total amount`)*3,weight = 05,clusterOptions = markerClusterOptions())
+
+my_map <- my_map %>% addCircleMarkers(radius = log(by_country$`Number of transactions`)*3,weight = 05,clusterOptions = markerClusterOptions(),color = "red")
+my_map
+```
+
+We Can see the by zooming in the graph certain level of clustering by geographical proximity.
+
+Thank you
+DLE
