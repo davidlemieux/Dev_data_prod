@@ -1,0 +1,78 @@
+---
+title: "my_presentation_week3"
+author: "DLE"
+date: "17 mai 2018"
+output: 
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+---
+
+```{r setup, include=FALSE,warning=F}
+knitr::opts_chunk$set(echo = FALSE)
+library(knitr)
+library(dplyr)
+library(lubridate)
+library(plotly)
+```
+
+## Coursera week3 Presentation
+
+This R Markdown Presentation will be used to demonstrate a simple histogramme of the loan for the years 2008 to 2012
+
+In this Presentation, we will show one graph can can easily demonstrate a certain level of preferential attachement in the international 
+syndicated loan market 
+
+## Preparation of the DataFrame
+the code below prepares the data to be proccessed
+```{r Data Preparation, echo = TRUE,warning=FALSE}
+the_file <- file.path("C:/Users/David/OneDrive/1_Ecole/Mandat_David",
+                      "analyse-reseau-udes/Data/Table_R_DealScan_2016/Facility_2016.csv")
+
+all_trans <- read.csv(the_file,sep="\t",header=T,quote="")
+
+
+all_trans$year <- year(mdy(all_trans$X.FacilityStartDate))
+
+all_trans <- all_trans %>% filter(year>=2008, year<=2012,X.FacilityAmt.>=500000)
+
+
+all_trans <- all_trans%>%filter("nb_players" >=2)
+setwd("C:/Users/David/OneDrive/Coursera/Data_dev_PROD/Dev_data_prod")
+country_data= read.csv("Country_data.csv",sep=",",header = T)
+
+all_trans <- as.data.frame(sapply(all_trans, function(x) gsub("\"", "", x)))
+all_trans$X.CountryOfSyndication.[all_trans$X.CountryOfSyndication.== " USA"] <- "USA"
+
+by_country= all_trans %>% group_by(X.CountryOfSyndication.) %>%
+  summarise(count= n(),amount= sum(as.numeric(X.FacilityAmt.)))
+names(by_country) <- c("Country","nb_trx","Total amount")
+
+```
+
+## Density Graph Code
+In this slide we can see an d play with th density graph made with plotly in ggplotly
+
+
+```{r Preparing the plot, echo=TRUE,warning=F,eval=F}
+
+p<-qplot(nb_trx,data=by_country, geom="density", alpha=I(.5), 
+    main="Distribution of Number of transaction", xlab="Number of transaction", 
+    ylab="Density for distribution")
+ggplotly(p)
+
+
+```
+
+## Density GRaph
+```{r the run, echo=FALSE,warning=F,eval=T}
+
+
+p<-qplot(nb_trx,data=by_country, geom="density", alpha=I(.5), 
+    main="Distribution of Number of transaction", xlab="Number of transaction", 
+    ylab="Density for distribution")
+
+
+
+ggplotly(p)
+```
