@@ -1,0 +1,99 @@
+Week_4_presentation
+========================================================
+author: DLE
+date: 21-05-2018
+autosize: true
+
+First Slide
+========================================================
+In this presentation the Shiny Apps Available: https://davidlemieux.shinyapps.io/my_app_week4_coursera/
+will be shortly explained
+
+The library **igraph** have been used for this exemple 
+
+## The first step is to select the following key variable
+- **Number of actor** - This will be represented by the number of points on the graph
+- **Probbility of links** - This will have an impact on the number of link in the graph
+- **Direction** - In Network Science the direction of the link is an important indicator
+- **Loops** - WIll identify if we want to authorize self-selection in our model
+
+
+
+Data Preparation
+========================================================
+The plot below illustrate a Erdos-Reny Random Graph model with 20 participants and a probability of links of 50% without directionality and loops
+
+```{r Data Prep, echo= T}
+library(igraph)
+g <-  igraph::erdos.renyi.game(20,0.5,directed = F,loops = F)
+plot (g)
+
+```
+
+
+Statistics
+========================================================
+
+```{r, Data stats, echo=T,eval=T}
+
+creat_df_stats <- function(g){
+    
+    E(g)$weight = 1/E(g)$weight
+    stats_name <- c(
+      "No. of players",
+      "No. of Links",
+      "Is Directed", 
+      "Is Weigthed",
+      "Is Connected",
+      "Density",
+      "Mean degree",
+      "Std degree",
+      
+      "Diameter",
+      "Average Distance ",
+      "Transitivity",
+      "Total_reciprocity",
+      "No. of cliques"
+    )
+    
+    
+    options(scipen=999)
+    stats <- c(
+      vcount(g),
+      ecount(g),
+      as.logical(is.directed(g)),
+      as.logical(is.weighted(g)),
+      as.logical(is.connected(g)),
+      graph.density(g,loop=F),
+      mean(graph.strength(g)),
+      sd(graph.strength(g)),
+      
+      max(shortest.paths(g)[is.finite(shortest.paths(g))]),
+      mean(shortest.paths(g)[is.finite(shortest.paths(g))]),
+      transitivity(g),
+      reciprocity(g),
+      clique.number(g)
+    )
+    
+    
+    stats_df=data.frame("Stats name"=stats_name,"Stats"=round(stats,digits=3))
+    names(stats_df) <- c("Stats name","Data")
+    
+    return(stats_df)
+  }
+
+
+
+
+```
+
+Resulting Statistics
+=========================================
+```{r, echo= T}
+
+the_df <- creat_df_stats(g)
+print(the_df)
+```
+
+
+
